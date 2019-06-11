@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ft_strnstr.c                                       :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Elena <Elena@student.42.fr>                +#+  +:+       +#+        */
+/*   By: frenna <frenna@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/04/03 16:05:22 by frenna            #+#    #+#             */
-/*   Updated: 2019/06/10 18:27:29 by Elena            ###   ########.fr       */
+/*   Updated: 2019/06/11 12:24:55 by frenna           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@ char	*ft_strnstr(const char *h, const char *ned, size_t len)
 	int		j;
 	size_t	n;
 
-	if (len == 0 || (len + 1) < 0)
+	if (len == 0)
 		return (0);
 	i = 0;
 	if (h[i] == '\0')

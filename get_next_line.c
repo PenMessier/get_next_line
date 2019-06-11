@@ -3,25 +3,26 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: Elena <Elena@student.42.fr>                +#+  +:+       +#+        */
+/*   By: frenna <frenna@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/04/29 10:45:07 by frenna            #+#    #+#             */
-/*   Updated: 2019/06/10 19:26:53 by Elena            ###   ########.fr       */
+/*   Updated: 2019/06/11 13:40:47 by frenna           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
-/**
- * Creates a new node and pushes it to the end of the list pointed by **str
- * if the list is not NULL. Otherwise pushes it to the head of the list.
- **/
-static	void		ft_init(node **str, char *content, int fd, size_t c_size)
-{
-	node			*curr;
-	node			*new;
+/*
+** Creates a new node and pushes it to the end of the list pointed by **str
+** if the list is not NULL. Otherwise pushes it to the head of the list.
+*/
 
-	if (!c_size || !(new = (node *)malloc(sizeof(*new))))
+void				ft_init(t_node **s, char *content, int fd, size_t c_size)
+{
+	t_node			*curr;
+	t_node			*new;
+
+	if (!c_size || !(new = (t_node *)malloc(sizeof(*new))))
 		return ;
 	new->content = ft_strnew(c_size);
 	if (!new->content)
@@ -33,12 +34,12 @@ static	void		ft_init(node **str, char *content, int fd, size_t c_size)
 	new->fd = fd;
 	new->content_size = c_size;
 	new->next = NULL;
-	if (*str == NULL)
+	if (*s == NULL)
 	{
-		*str = new;
+		*s = new;
 		return ;
 	}
-	curr = *str;
+	curr = *s;
 	while (curr->next != NULL)
 		curr = curr->next;
 	curr->next = new;
@@ -46,14 +47,16 @@ static	void		ft_init(node **str, char *content, int fd, size_t c_size)
 }
 
 /*
-* Counts size in bytes for memory allocation for the line.
+** Counts size in bytes for memory allocation for the line.
+** Allocates memory. If allocation fail returns 0.
 */
-static size_t		ft_size(node **str, int fd)
+
+size_t				ft_size(t_node **s, int fd, char **line)
 {
-	node			*tmp;
+	t_node			*tmp;
 	size_t			n;
 
-	tmp = *str;
+	tmp = *s;
 	n = 0;
 	while (tmp != NULL)
 	{
@@ -65,33 +68,31 @@ static size_t		ft_size(node **str, int fd)
 		}
 		tmp = tmp->next;
 	}
+	if (!(*line = ft_strnew(n)))
+		return (0);
 	return (n);
 }
 
 /*
-* Allocates memory for the line. Copies the content
-* from the list **str to the **line according to the fd
-* and remooves copied element from the list.
+** Allocates memory for the line. Copies the content
+** from the list **str to the **line according to the fd
+** and remooves copied element from the list.
 */
-static	void		ft_line(node **str, char **line, int fd, size_t *f)
-{
-	node			*curr;
-	node			*tmp;
-	//char			*s;
 
-	if (!(*line = ft_strnew(*f)))
-	//if (!(s = ft_strnew(*f)))
-		return ;
-	curr = *str;
+void				ft_line(t_node **s, char **line, int fd)
+{
+	t_node			*curr;
+	t_node			*tmp;
+
+	curr = *s;
 	tmp = NULL;
 	while (curr != NULL)
 	{
-		if(curr->fd == fd)
+		if (curr->fd == fd)
 		{
 			*line = ft_strcat(*line, curr->content);
-			//s = ft_strcat(s, curr->content);
-			if (curr == *str)
-				*str = (*str)->next;
+			if (curr == *s)
+				*s = (*s)->next;
 			tmp = curr;
 			ft_strdel(&(tmp->content));
 			tmp->fd = -1;
@@ -99,23 +100,22 @@ static	void		ft_line(node **str, char **line, int fd, size_t *f)
 			ft_memdel((void **)&tmp);
 		}
 		if (ft_strrchr(*line, '\n'))
-		//if (ft_strrchr(s, '\n'))
 			break ;
 		curr = curr->next;
 	}
 	ft_strrchr(*line, '\n') ? *ft_strrchr(*line, '\n') = '\0' : 0;
-	//ft_strrchr(s, '\n') ? *ft_strrchr(s, '\n') = '\0' : 0;
-	//*line = s;
 	free(*line);
 }
 
 /*
-* Finds the end of the line ('\n') if it exists in the buffer, upgrades *f to 1.
-* Then creates a new list element and puts buffer content till '\n' in it.
-* Since the buffer contains characters after '\n' creates a new element
-* and puts the rest of buffer content there.
+** Finds the end of the line ('\n') if it exists in the buffer,
+** upgrades *f to 1. Then creates a new list element and puts
+** buffer content till '\n' in it. Since the buffer contains
+** characters after '\n' creates a new element and
+** puts the rest of buffer content there.
 */
-static	void		ft_read(int fd, ssize_t rd, node **str, size_t *f, char *buff)
+
+size_t				ft_r(int fd, ssize_t rd, t_node **s, char *buff)
 {
 	char			*tmp;
 	char			*curr;
@@ -123,33 +123,32 @@ static	void		ft_read(int fd, ssize_t rd, node **str, size_t *f, char *buff)
 
 	i = 1;
 	tmp = buff;
-	curr = buff;
 	if (ft_strrchr(buff, '\n'))
 	{
-		*f = 1;
 		while (*tmp)
 		{
 			if (*tmp == '\n')
 			{
-				ft_init(str, curr, fd, i);
+				ft_init(s, curr, fd, i);
 				curr = tmp + 1;
 				i = 0;
 			}
 			i++;
 			tmp++;
 		}
-		if (*tmp - *curr != 0)
-			ft_init(str, curr, fd, i);
+		(*tmp - *curr != 0) ? ft_init(s, curr, fd, i) : 0;
+		return (1);
 	}
 	else
-		ft_init(str, buff, fd, rd);
+		ft_init(s, buff, fd, rd);
+	return (0);
 }
 
 int					get_next_line(const int fd, char **line)
 {
 	char			buf[1];
 	char			*buff;
-	static	node	*str;
+	static	t_node	*s;
 	size_t			f;
 	ssize_t			rd;
 
@@ -165,10 +164,10 @@ int					get_next_line(const int fd, char **line)
 			ft_strdel(&buff);
 			break ;
 		}
-		ft_read(fd, rd, &str, &f, buff);
+		f = ft_r(fd, rd, &s, buff);
 		ft_strdel(&buff);
 	}
-	f = ft_size(&str, fd);
-	ft_line(&str, line, fd, &f);
+	ft_size(&s, fd, line);
+	ft_line(&s, line, fd);
 	return (*line ? 1 : 0);
 }
