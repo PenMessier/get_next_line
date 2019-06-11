@@ -6,7 +6,7 @@
 /*   By: Elena <Elena@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/04/29 10:45:07 by frenna            #+#    #+#             */
-/*   Updated: 2019/06/09 16:41:30 by Elena            ###   ########.fr       */
+/*   Updated: 2019/06/10 19:26:53 by Elena            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,22 +16,22 @@
  * Creates a new node and pushes it to the end of the list pointed by **str
  * if the list is not NULL. Otherwise pushes it to the head of the list.
  **/
-static	void	ft_init(node **str, char *content, int fd, size_t content_size)
+static	void		ft_init(node **str, char *content, int fd, size_t c_size)
 {
-	node		*curr;
-	node		*new;
+	node			*curr;
+	node			*new;
 
-	if (!content_size || !(new = (node *)malloc(sizeof(*new))))
+	if (!c_size || !(new = (node *)malloc(sizeof(*new))))
 		return ;
-	new->content = (char *)malloc(content_size);
+	new->content = ft_strnew(c_size);
 	if (!new->content)
 	{
 		free(new);
 		return ;
 	}
-	ft_memcpy(new->content, content, content_size);
+	ft_memcpy(new->content, content, c_size);
 	new->fd = fd;
-	new->content_size = content_size;
+	new->content_size = c_size;
 	new->next = NULL;
 	if (*str == NULL)
 	{
@@ -48,10 +48,10 @@ static	void	ft_init(node **str, char *content, int fd, size_t content_size)
 /*
 * Counts size in bytes for memory allocation for the line.
 */
-static size_t	ft_size(node **str, int fd)
+static size_t		ft_size(node **str, int fd)
 {
-	node		*tmp;
-	size_t		n;
+	node			*tmp;
+	size_t			n;
 
 	tmp = *str;
 	n = 0;
@@ -73,13 +73,14 @@ static size_t	ft_size(node **str, int fd)
 * from the list **str to the **line according to the fd
 * and remooves copied element from the list.
 */
-static void	ft_line(node **str, char **line, int fd, size_t *f)
+static	void		ft_line(node **str, char **line, int fd, size_t *f)
 {
-	node	*curr;
-	node	*tmp;
+	node			*curr;
+	node			*tmp;
+	//char			*s;
 
-	//ft_strdel(line);
 	if (!(*line = ft_strnew(*f)))
+	//if (!(s = ft_strnew(*f)))
 		return ;
 	curr = *str;
 	tmp = NULL;
@@ -88,20 +89,24 @@ static void	ft_line(node **str, char **line, int fd, size_t *f)
 		if(curr->fd == fd)
 		{
 			*line = ft_strcat(*line, curr->content);
+			//s = ft_strcat(s, curr->content);
 			if (curr == *str)
 				*str = (*str)->next;
 			tmp = curr;
-			if (tmp->content)
-				ft_strdel(&(tmp->content));
+			ft_strdel(&(tmp->content));
 			tmp->fd = -1;
-			tmp->content_size = 0;
 			tmp = NULL;
 			ft_memdel((void **)&tmp);
 		}
 		if (ft_strrchr(*line, '\n'))
+		//if (ft_strrchr(s, '\n'))
 			break ;
 		curr = curr->next;
 	}
+	ft_strrchr(*line, '\n') ? *ft_strrchr(*line, '\n') = '\0' : 0;
+	//ft_strrchr(s, '\n') ? *ft_strrchr(s, '\n') = '\0' : 0;
+	//*line = s;
+	free(*line);
 }
 
 /*
@@ -110,13 +115,13 @@ static void	ft_line(node **str, char **line, int fd, size_t *f)
 * Since the buffer contains characters after '\n' creates a new element
 * and puts the rest of buffer content there.
 */
-static	void	ft_readline(int fd, ssize_t rd, node **str, size_t *f, char *buff)
+static	void		ft_read(int fd, ssize_t rd, node **str, size_t *f, char *buff)
 {
-	char		*tmp;
-	char		*curr;
-	int			i;
+	char			*tmp;
+	char			*curr;
+	int				i;
 
-	i = 0;
+	i = 1;
 	tmp = buff;
 	curr = buff;
 	if (ft_strrchr(buff, '\n'))
@@ -126,45 +131,44 @@ static	void	ft_readline(int fd, ssize_t rd, node **str, size_t *f, char *buff)
 		{
 			if (*tmp == '\n')
 			{
-				ft_init(str, curr, fd, (i + 1));
+				ft_init(str, curr, fd, i);
 				curr = tmp + 1;
 				i = 0;
 			}
-			else
-				i++;
+			i++;
 			tmp++;
 		}
 		if (*tmp - *curr != 0)
-			ft_init(str, curr, fd, (i + 1));
+			ft_init(str, curr, fd, i);
 	}
 	else
 		ft_init(str, buff, fd, rd);
 }
 
-int	get_next_line(const int fd, char **line)
+int					get_next_line(const int fd, char **line)
 {
-	char	buf[1];
-	char	*buff;
+	char			buf[1];
+	char			*buff;
 	static	node	*str;
-	size_t	f;
-	ssize_t	rd;
+	size_t			f;
+	ssize_t			rd;
 
-	if (fd < 0 || !line || read(fd, (void *)buf, 0) < 0)
+	if (fd < 0 || !line || read(fd, (void *)buf, 0) < 0 || !BUFF_SIZE)
 		return (-1);
 	f = 0;
 	while (f == 0 && (buff = ft_strnew(BUFF_SIZE)))
 	{
+		if (!buff)
+			return (-1);
 		if (!(rd = read(fd, (void *)buff, BUFF_SIZE)))
 		{
 			ft_strdel(&buff);
 			break ;
 		}
-		ft_readline(fd, rd, &str, &f, buff);
+		ft_read(fd, rd, &str, &f, buff);
 		ft_strdel(&buff);
 	}
 	f = ft_size(&str, fd);
 	ft_line(&str, line, fd, &f);
-	if (ft_strrchr(*line, '\n'))
-		*ft_strrchr(*line, '\n') = '\0';
 	return (*line ? 1 : 0);
 }

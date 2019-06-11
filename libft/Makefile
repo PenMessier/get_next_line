@@ -3,16 +3,16 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: frenna <frenna@student.42.fr>              +#+  +:+       +#+         #
+#    By: Elena <Elena@student.42.fr>                +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2019/04/10 13:36:52 by frenna            #+#    #+#              #
-#    Updated: 2019/04/25 17:22:27 by frenna           ###   ########.fr        #
+#    Updated: 2019/06/10 18:33:46 by Elena            ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 NAME = libft.a
-SRCS =  ft_atoi.c ft_bzero.c ft_isalnum.c ft_isalpha.c ft_isascii.c \
-		ft_isdigit.c ft_isprint.c ft_itoa.c ft_lstadd.c ft_lstdel.c \
+FILES =	ft_atoi.c ft_bzero.c ft_isalnum.c ft_isalpha.c \
+		ft_isascii.c ft_isdigit.c ft_isprint.c ft_itoa.c ft_lstadd.c ft_lstdel.c \
 		ft_lstdelone.c ft_lstiter.c ft_lstmap.c ft_lstnew.c ft_memalloc.c \
 		ft_memccpy.c ft_memchr.c ft_memcmp.c ft_memcpy.c ft_memdel.c \
 		ft_memmove.c ft_memset.c ft_putchar.c ft_putchar_fd.c ft_putendl.c \
@@ -25,7 +25,8 @@ SRCS =  ft_atoi.c ft_bzero.c ft_isalnum.c ft_isalpha.c ft_isascii.c \
 		ft_strsub.c ft_strtrim.c ft_tolower.c ft_toupper.c \
 		ft_count_words.c ft_range.c ft_swap.c ft_bubble_sort.c \
 		ft_is_sorted.c
-OBJ = $(SRCS:.c=.o)
+SRCS := $(addprefix srcs/, $(FILES))
+OBJ = $(FILES:.c=.o)
 FLAGS = -Wall -Wextra -Werror -c
 
 all: $(NAME)
