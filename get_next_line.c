@@ -3,18 +3,19 @@
 /*                                                        :::      ::::::::   */
 /*   get_next_line.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: frenna <frenna@student.42.fr>              +#+  +:+       +#+        */
+/*   By: Elena <Elena@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/04/29 10:45:07 by frenna            #+#    #+#             */
-/*   Updated: 2019/06/11 13:40:47 by frenna           ###   ########.fr       */
+/*   Updated: 2019/06/19 16:27:00 by Elena            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line.h"
 
 /*
-** Creates a new node and pushes it to the end of the list pointed by **str
-** if the list is not NULL. Otherwise pushes it to the head of the list.
+** Creates a new item and pushes it to the end of the list pointed by **s
+** if the list is not NULL. Otherwise sets the head of the list to be
+** a new item.
 */
 
 void				ft_init(t_node **s, char *content, int fd, size_t c_size)
@@ -47,36 +48,13 @@ void				ft_init(t_node **s, char *content, int fd, size_t c_size)
 }
 
 /*
-** Counts size in bytes for memory allocation for the line.
-** Allocates memory. If allocation fail returns 0.
-*/
-
-size_t				ft_size(t_node **s, int fd, char **line)
-{
-	t_node			*tmp;
-	size_t			n;
-
-	tmp = *s;
-	n = 0;
-	while (tmp != NULL)
-	{
-		if (tmp->fd == fd)
-		{
-			n += tmp->content_size;
-			if (ft_strrchr(tmp->content, '\n'))
-				break ;
-		}
-		tmp = tmp->next;
-	}
-	if (!(*line = ft_strnew(n)))
-		return (0);
-	return (n);
-}
-
-/*
-** Allocates memory for the line. Copies the content
-** from the list **str to the **line according to the fd
-** and remooves copied element from the list.
+** Iterates over the list until the item
+** with given fd is found. Copies the content
+** from the item to the line. Frees memory allocated
+** for the item content. If the item is a head of the
+** list sets head's pointer to the next item and frees
+** memory allocated to the item.
+** Replaces '\n' in the line with '\0'.
 */
 
 void				ft_line(t_node **s, char **line, int fd)
@@ -85,32 +63,66 @@ void				ft_line(t_node **s, char **line, int fd)
 	t_node			*tmp;
 
 	curr = *s;
-	tmp = NULL;
-	while (curr != NULL)
+	while (curr)
 	{
 		if (curr->fd == fd)
 		{
 			*line = ft_strcat(*line, curr->content);
-			if (curr == *s)
-				*s = (*s)->next;
 			tmp = curr;
 			ft_strdel(&(tmp->content));
-			tmp->fd = -1;
-			tmp = NULL;
-			ft_memdel((void **)&tmp);
+			if (tmp == *s)
+			{
+				*s = (*s)->next;
+				free(tmp);
+			}
 		}
+		curr = curr->next;
 		if (ft_strrchr(*line, '\n'))
 			break ;
-		curr = curr->next;
 	}
 	ft_strrchr(*line, '\n') ? *ft_strrchr(*line, '\n') = '\0' : 0;
-	free(*line);
+}
+
+/*
+** Iterates over the list to add content_sizes of every
+** node with given fd untill the node which containes '\n'
+** or the list's end. Allocates memory for the line.
+** Iterates over the list to free all empty nodes.
+*/
+
+void				ft_size(t_node **s, int fd, char **line, size_t f)
+{
+	t_node			*tmp;
+	t_node			*curr;
+
+	tmp = *s;
+	f = 0;
+	while (tmp)
+	{
+		(tmp->fd == fd) ? f += tmp->content_size : 0;
+		if (ft_strrchr(tmp->content, '\n'))
+				break ;
+		tmp = tmp->next;
+	}
+	(*line = ft_strnew(f)) ? ft_line(s,line, fd) : 0;
+	curr = *s;
+	while (curr && curr->next != NULL)
+	{
+		if (!curr->next->content)
+		{
+			tmp = curr->next;
+			curr->next = tmp->next;
+			free(tmp);
+		}
+		else
+			curr = curr->next;
+	}
 }
 
 /*
 ** Finds the end of the line ('\n') if it exists in the buffer,
 ** upgrades *f to 1. Then creates a new list element and puts
-** buffer content till '\n' in it. Since the buffer contains
+** buffer content untill '\n' in it. Since the buffer contains
 ** characters after '\n' creates a new element and
 ** puts the rest of buffer content there.
 */
@@ -155,19 +167,13 @@ int					get_next_line(const int fd, char **line)
 	if (fd < 0 || !line || read(fd, (void *)buf, 0) < 0 || !BUFF_SIZE)
 		return (-1);
 	f = 0;
-	while (f == 0 && (buff = ft_strnew(BUFF_SIZE)))
+	while (f == 0 && (buff = ft_strnew(BUFF_SIZE))
+	&& (rd = read(fd, (void *)buff, BUFF_SIZE)))
 	{
-		if (!buff)
-			return (-1);
-		if (!(rd = read(fd, (void *)buff, BUFF_SIZE)))
-		{
-			ft_strdel(&buff);
-			break ;
-		}
 		f = ft_r(fd, rd, &s, buff);
 		ft_strdel(&buff);
 	}
-	ft_size(&s, fd, line);
-	ft_line(&s, line, fd);
+	buff ? ft_strdel(&buff) : 0;
+	ft_size(&s, fd, line, f);
 	return (*line ? 1 : 0);
 }
